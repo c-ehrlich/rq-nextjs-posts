@@ -5,14 +5,19 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  let id = Number(req.query.id[0]);
+  let id = Number(req.query.id);
   if (Number.isNaN(id)) {
     return res.status(400).json({ error: 'id needs to be a number' });
   }
 
   // get one
   if (req.method === 'GET') {
-    const post = await prisma.post.findUnique({ where: { id } });
+    let post;
+    try {
+      post = await prisma.post.findUnique({ where: { id } });
+    } catch (e: any) {
+      console.log(e.meta.cause);
+    }
     if (!post) {
       return res.status(400).json({ error: 'Post not found' });
     }
@@ -31,11 +36,11 @@ export default async function handler(
   }
   // delete one
   if (req.method === 'DELETE') {
-    let post; 
+    let post;
     try {
-      post = await prisma.post.delete({ where: { id }});
+      post = await prisma.post.delete({ where: { id } });
     } catch (e: any) {
-      return res.status(400).json({ error: e.meta.cause })
+      return res.status(400).json({ error: e.meta.cause });
     }
     return res.status(200).json(post);
   }

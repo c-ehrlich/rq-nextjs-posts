@@ -4,4 +4,6 @@ type Post = {
   text: string;
   createdAt: number;
   updatedAt: number;
-}
+};
+
+export default Post;

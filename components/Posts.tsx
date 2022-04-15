@@ -14,7 +14,7 @@ const Posts = () => {
             <li key={post.id}>
               <Link href={`/posts/${post.id}`}>
               <a>
-                {post.id} - {post.title}
+                {post.title}
               </a>
               </Link>
             </li>

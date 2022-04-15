@@ -1,6 +1,7 @@
 import axios from 'axios';
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from 'react-query';
+import Post from '../types/Post';
 
 const CreatePost = () => {
   const [title, setTitle] = useState<string>('');
@@ -8,17 +9,39 @@ const CreatePost = () => {
 
   const queryClient = useQueryClient();
 
-  const createPost = useMutation((newPost: Partial<Post>) => {
-    return axios.post('/api/posts', newPost);
-  }, {
-    onError: (error: any) => window.alert(error.response),
-    onSettled: () => queryClient.invalidateQueries(['posts'])
-  })
+  const createPost = useMutation(
+    (newPost: Partial<Post>) => {
+      return axios.post('/api/posts', newPost);
+    },
+    {
+      onMutate: (newPost) => {
+        const post = {
+          id: 0,
+          title: newPost.title || 'title',
+          text: newPost.text || 'text',
+          createdAt: 0,
+          updatedAt: 0,
+        }
+        queryClient.setQueryData<Post[]>(['posts'], (oldPosts) => {
+          if (!oldPosts) return [post]
+          return [post, ...oldPosts]
+        });
+      },
+      onError: (error: any) => window.alert(error.response),
+      onSettled: () => queryClient.invalidateQueries(['posts']),
+    }
+  );
 
-  const handleButtonClick = (e: React.FormEvent, title: string, text: string) => {
+  const handleButtonClick = (
+    e: React.FormEvent,
+    title: string,
+    text: string
+  ) => {
     e.preventDefault();
-    createPost.mutate({ title, text })
-  }
+    createPost.mutate({ title, text });
+    setTitle('');
+    setText('');
+  };
 
   return (
     <div style={{ minWidth: '400px' }}>
@@ -40,7 +63,10 @@ const CreatePost = () => {
           type='text'
           placeholder='text'
         />
-        <button onClick={(e) => handleButtonClick(e, title, text)} style={{ marginTop: '8px' }}>
+        <button
+          onClick={(e) => handleButtonClick(e, title, text)}
+          style={{ marginTop: '8px' }}
+        >
           Submit
         </button>
       </form>
