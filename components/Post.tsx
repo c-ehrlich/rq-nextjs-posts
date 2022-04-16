@@ -1,12 +1,14 @@
 import axios from 'axios';
 import { useRouter } from 'next/router';
-import React from 'react';
+import React, { useState } from 'react';
 import { useMutation, useQueryClient } from 'react-query';
 import Post from '../types/Post';
 
 const Post = ({ post }: { post: Post }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [title, setTitle] = useState<string>('');
+  const [text, setText] = useState<string>('');
 
   const handleDelete = () => {
     console.log('delete');
@@ -27,6 +29,33 @@ const Post = ({ post }: { post: Post }) => {
     onSettled: () => queryClient.invalidateQueries(['posts']),
   })
 
+  const handleEditButtonClick = (e: React.FormEvent, title: string, text: string) => {
+    e.preventDefault();
+    editPost.mutate({ title, text })
+    setTitle('');
+    setText('');
+  }
+
+  const editPost = useMutation((editedPost: Partial<Post>) => {
+    return axios.patch(`/api/posts/${post.id}`, editedPost)
+  },
+  {
+    onMutate: (newPost) => {
+      const tempPost = {
+        id: post.id || 0,
+        title: newPost.title || post.title,
+        text: newPost.text || post.text,
+        createdAt: post.createdAt || 0,
+        updatedAt: post.updatedAt || 0,
+      }
+      queryClient.setQueryData<Post>(['post', String(post.id)], () => {
+        return tempPost;
+      })
+    },
+    onError: (error: any) => window.alert(JSON.stringify(error.response)),
+    onSettled: () => queryClient.invalidateQueries(['post', String(post.id)])
+  })
+
   return (
     <div>
       <h1>
@@ -35,9 +64,34 @@ const Post = ({ post }: { post: Post }) => {
       <div>{post.text}</div>
       <div>Created: {post.createdAt}</div>
       <div>Updated: {post.updatedAt}</div>
-      <button style={{ margin: '8px', padding: '8px' }} onClick={handleDelete}>
+      <button style={{ marginTop: '8px', padding: '8px' }} onClick={handleDelete}>
         Delete
       </button>
+      <h3>Edit post</h3>
+        <form style={{ display: 'flex', flexDirection: 'column'}}>
+          <label htmlFor='title'>Title</label>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            name='title'
+            placeholder='Title'
+            type='text'
+          />
+          <label htmlFor='text'>Text</label>
+          <input
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            name='text'
+            placeholder='Text'
+            type='text'
+          />
+          <button
+            onClick={(e) => handleEditButtonClick(e, title, text)}
+            style={{ marginTop: '8px', padding: '8px' }}
+          >
+            Submit
+          </button>
+        </form>
     </div>
   );
 };
