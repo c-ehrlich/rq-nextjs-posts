@@ -27,7 +27,11 @@ export default async function handler(
 
   // patch one
   if (req.method === 'PATCH') {
-    const data = req.body;
+    // only keep properties that are not empty strings
+    const data = Object.fromEntries(
+      Object.entries(req.body).filter(([_, v]) => v != null && v != '')
+    );
+    console.log(data);
     const post = await prisma.post.update({
       where: { id },
       data,
