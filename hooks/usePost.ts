@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { useQuery } from 'react-query';
+import Post from '../types/Post';
 
-const fetchPost = async (postId: string) => {
+export const fetchPost = async (postId: string) => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
   const post: Post = await axios
     .get(`http://localhost:3000/api/posts/${postId}`)
